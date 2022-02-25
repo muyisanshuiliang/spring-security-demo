@@ -1,0 +1,13 @@
+server:
+  port: 18888
+spring:
+  security:
+    user:
+      name: muyi
+      password: 12345
+  thymeleaf:
+    cache: false
+    encoding: UTF-8
+logging:
+  level:
+    com.example.dss: debug

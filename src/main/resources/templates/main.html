@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+</head>
+<body>
+<form action="/main" method="get">
+    hello 第一个Thymeleaf程序
+    <div th:text="${username}">name是username(我是离线数据)</div>
+    <div th:text="${password}">password是password(我是离线数据)</div>
+</form>
+</body>
+</html>
