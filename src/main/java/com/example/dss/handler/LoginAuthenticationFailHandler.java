@@ -27,10 +27,9 @@ public class LoginAuthenticationFailHandler implements AuthenticationFailureHand
 
         System.out.println(exception.getMessage());
         if (isRedirect) {
-            // 请求重定向
+            // 响应重定向
             response.sendRedirect(url);
         } else {
-
             // 请求转发
             request.getRequestDispatcher(url).forward(request, response);
         }
