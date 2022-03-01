@@ -2,21 +2,42 @@ package com.example.dss.config;
 
 import com.example.dss.handler.AccessDenyHandler;
 import com.example.dss.handler.LoginAuthenticationSuccessHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
-
-import javax.sql.DataSource;
+import org.springframework.util.DigestUtils;
 
 @Configuration
 public class MySpringSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    private PersistentTokenRepository persistentTokenRepository;
+
+    @Autowired
+    private UserSecurityConfig userSecurityConfig;
+
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new SimplePasswordEncoder();
+    }
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        //校验用户
+        auth.userDetailsService(userSecurityConfig).passwordEncoder(passwordEncoder());
+    }
+
+    @Override
+    @Bean
+    protected AuthenticationManager authenticationManager() throws Exception {
+        return super.authenticationManager();
     }
 
     @Override
@@ -41,8 +62,8 @@ public class MySpringSecurityConfig extends WebSecurityConfigurerAdapter {
         http.rememberMe()
                 .rememberMeParameter("remember-me")
                 .tokenValiditySeconds(7 * 24 * 3600)
-                .tokenRepository(persistentTokenRepository())
-                .userDetailsService();
+                .tokenRepository(persistentTokenRepository)
+                .userDetailsService(userSecurityConfig);
 
 
         /**
@@ -89,18 +110,5 @@ public class MySpringSecurityConfig extends WebSecurityConfigurerAdapter {
         http.csrf().disable();
     }
 
-    /**
-     * 所有被bean注解的方法参数都是直接从spring 容器中获取
-     *
-     * @param dataSource
-     * @return
-     */
-    @Bean
-    public PersistentTokenRepository persistentTokenRepository(DataSource dataSource) {
-        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
-        jdbcTokenRepository.setDataSource(dataSource);
-        // 设置启动时创建表格
-        jdbcTokenRepository.setCreateTableOnStartup(true);
-        return jdbcTokenRepository;
-    }
+
 }
