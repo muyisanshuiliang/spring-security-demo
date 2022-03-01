@@ -1,11 +1,16 @@
 package com.example.dss.config;
 
+import com.example.dss.handler.AccessDenyHandler;
 import com.example.dss.handler.LoginAuthenticationSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+
+import javax.sql.DataSource;
 
 @Configuration
 public class MySpringSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -26,6 +31,19 @@ public class MySpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .successHandler(new LoginAuthenticationSuccessHandler("/auth/main", true))
 //                .failureHandler(new LoginAuthenticationFailHandler("/auth/error"));
                 .failureUrl("/login-failed");
+
+
+        // 配置 403 页面
+        http.exceptionHandling()
+                .accessDeniedHandler(new AccessDenyHandler("/deny", false));
+
+
+        http.rememberMe()
+                .rememberMeParameter("remember-me")
+                .tokenValiditySeconds(7 * 24 * 3600)
+                .tokenRepository(persistentTokenRepository())
+                .userDetailsService();
+
 
         /**
          * 匹配路径后授予的权限，匹配逻辑成立后再授予访问权限
@@ -51,8 +69,38 @@ public class MySpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
         http.authorizeRequests()
                 .antMatchers("/login").access("anonymous")
-                .antMatchers("/register","/index").permitAll()
-                .anyRequest().fullyAuthenticated();
+                .antMatchers("/register", "/index").permitAll()
+                /**
+                 * SpringEL表达式注入bean,
+                 * @beanname 注入bean
+                 * @beanname.method 调用bean的方法
+                 * 参数在 WebSecurityExpressionRoot 查看
+                 */
+                .antMatchers("/**").access("@myAuthorityPermit.hasAuthority(request,authentication)")
+                // 基于资源的权限控制
+                .antMatchers("/admin/write").hasAnyAuthority("admin:write")
+                .antMatchers("/admin/read").access("hasAnyAuthority('admin:read','admin:write')")
+                // 基于角色的权限控制
+                .antMatchers("/guest/**").hasAnyRole("admin", "guest")
+                .antMatchers("/anonymous/**").access("hasAnyRole('admin','guest','anonymous')")
+                // ip规则访问要求匹配完整，127.0.0.1 -> 0:0:0:0:0:0:0:1 | localhost | 127.0.0.1
+                .antMatchers("/ip").hasIpAddress("localhost")
+                .anyRequest().permitAll();
         http.csrf().disable();
+    }
+
+    /**
+     * 所有被bean注解的方法参数都是直接从spring 容器中获取
+     *
+     * @param dataSource
+     * @return
+     */
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository(DataSource dataSource) {
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+        jdbcTokenRepository.setDataSource(dataSource);
+        // 设置启动时创建表格
+        jdbcTokenRepository.setCreateTableOnStartup(true);
+        return jdbcTokenRepository;
     }
 }

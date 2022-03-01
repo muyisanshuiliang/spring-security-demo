@@ -62,4 +62,9 @@ public class SecurityController {
     public String loginFailed() {
         return "error";
     }
+
+    @RequestMapping("/deny")
+    public String deny() {
+        return "deny";
+    }
 }

@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class UserRoleRelation {
     private Integer userId;
-    private String name;
-    private String password;
+
+    private Integer[] roleIds;
 }

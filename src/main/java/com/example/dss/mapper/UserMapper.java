@@ -1,26 +1,50 @@
 package com.example.dss.mapper;
 
+import com.example.dss.domain.Role;
 import com.example.dss.domain.User;
+import com.example.dss.domain.UserRoleRelation;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserMapper {
 
-    private static Map<String, User> userMap;
+    private static Map<String, User> userDatabase;
+    private static Map<Integer, Role> roleDatabase;
+    private static Map<Integer, UserRoleRelation> userRoleRelationDatabase;
 
     static {
-        userMap = new HashMap<>();
-        userMap.put("muyi-1",new User(1,"muyi-1","4c68cea7e58591b579fd074bcdaff740"));
-        userMap.put("muyi-2",new User(2,"muyi-2","db7282901da891bea2fcd73840caad1c"));
-        userMap.put("muyi-3",new User(3,"muyi-3","e08599ba76fe6afa2b5786d857b0f56e"));
-        userMap.put("muyi-4",new User(4,"muyi-4","9cc16a0bb48e3e50c4fd9c79444b393b"));
-        userMap.put("muyi-5",new User(5,"muyi-5","e72581f8614727a152dec6fcfc739ad2"));
+        userDatabase = new HashMap<>();
+        userDatabase.put("admin", new User(1, "admin", "21232f297a57a5a743894a0e4a801fc3"));
+        userDatabase.put("guest", new User(2, "guest", "084e0343a0486ff05530df6c705c8bb4"));
+        userDatabase.put("anonymous", new User(3, "anonymous", "294de3557d9d00b3d2d8a1e6aab028cf"));
+
+        roleDatabase = new HashMap<>();
+        roleDatabase.put(1, new Role(1, "admin_read", new String[]{"read"}));
+        roleDatabase.put(2, new Role(2, "guest_read", new String[]{"read"}));
+        roleDatabase.put(3, new Role(3, "anonymous_read", new String[]{"read"}));
+        roleDatabase.put(4, new Role(4, "admin_write", new String[]{"read", "write"}));
+        roleDatabase.put(5, new Role(5, "guest_write", new String[]{"read", "write"}));
+        roleDatabase.put(6, new Role(6, "anonymous_write", new String[]{"read", "write"}));
+
+        userRoleRelationDatabase = new HashMap<>();
+        userRoleRelationDatabase.put(1, new UserRoleRelation(1, new Integer[]{1, 2, 3, 4, 5, 6}));
+        userRoleRelationDatabase.put(2, new UserRoleRelation(2, new Integer[]{2, 3, 5, 6}));
+        userRoleRelationDatabase.put(3, new UserRoleRelation(3, new Integer[]{3, 6}));
     }
 
+
     public User getUserByName(String name) {
-        return userMap.get(name);
+        return userDatabase.get(name);
     }
+
+    public List<String> getRoles(Integer userId) {
+        final UserRoleRelation userRoleRelation = userRoleRelationDatabase.get(userId);
+        return Arrays.stream(userRoleRelation.getRoleIds()).map(item -> roleDatabase.get(item).getRoleName()).collect(Collectors.toList());
+    }
+
+
+
 }

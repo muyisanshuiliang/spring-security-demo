@@ -8,6 +8,11 @@ spring:
   thymeleaf:
     cache: false
     encoding: UTF-8
+  datasource:
+    url:
+    driver-class-name:
+    password:
+    name:
 logging:
   level:
     com.example.dss: debug
